@@ -1,11 +1,42 @@
-<!DOCTYPE html> <html> <head> <title>Ιατρικό Σύστημα</title> </head> <body> <h2>Ανέβασμα Ακτινογραφίας</h2> <form action="/upload" method="post" enctype="multipart/form-data"> <input type="file" name="file"> <button type="submit">Αποθήκευση</button> </form> <h3>Αποθηκευμένες Ακτινογραφίες:</h3>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ιατρικό Σύστημα</title>
+</head>
+<body>
 
-{% for file in os.listdir('static/uploads') %}
-<div>
-<a href="{{ url_for('static', filename='uploads/' + file) }}" target="_blank">
-{{ file }}
-</a>
+<h2>Νέος Ασθενής</h2>
+
+<form action="/add_patient" method="post">
+    Όνομα:
+    <input type="text" name="name" required>
+    Ηλικία:
+    <input type="number" name="age" required>
+    <button type="submit">Αποθήκευση</button>
+</form>
+
+<hr>
+
+<h2>Ασθενείς</h2>
+
+{% for patient in patients %}
+<div style="border:1px solid black; padding:10px; margin:10px;">
+
+    <strong>{{ patient[1] }}</strong> ({{ patient[2] }} ετών)
+
+    <form action="/upload_xray/{{ patient[0] }}"
+          method="post"
+          enctype="multipart/form-data">
+        <input type="file" name="file">
+        <button type="submit">Αποθήκευση Ακτινογραφίας</button>
+    </form>
+
+    <div>
+        <a href="/static/uploads/" target="_blank">Φάκελος Ακτινογραφιών</a>
+    </div>
+
 </div>
 {% endfor %}
 
-</body> </html>
+</body>
+</html>
