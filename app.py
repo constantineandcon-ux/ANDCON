@@ -1,83 +1,92 @@
-from flask import Flask, render_template, request, redirect, url_for, send_file
+from flask import Flask, render_template, request, redirect, send_file
 import psycopg2
 import io
 
 app = Flask(__name__)
 
-DB_CONFIG = {
-    "dbname": "postgres",
-    "user": "postgres",
-    "password": "YOUR_PASSWORD",
-    "host": "YOUR_HOST",
-    "port": "5432"
-}
-
-def get_conn():
-    return psycopg2.connect(**DB_CONFIG)
+conn = psycopg2.connect(
+    host="localhost",
+    database="medical",
+    user="postgres",
+    password="1234"
+)
 
 @app.route("/")
 def index():
-    conn = get_conn()
     cur = conn.cursor()
-    cur.execute("SELECT id, amka, first_name, last_name FROM patients ORDER BY created_at DESC;")
+    cur.execute("SELECT * FROM patients ORDER BY created_at DESC")
     patients = cur.fetchall()
     cur.close()
-    conn.close()
     return render_template("index.html", patients=patients)
 
 @app.route("/add_patient", methods=["POST"])
 def add_patient():
-    amka = request.form["amka"]
-    first_name = request.form["first_name"]
-    last_name = request.form["last_name"]
     photo = request.files["photo"].read()
-
-    conn = get_conn()
     cur = conn.cursor()
     cur.execute("""
-        INSERT INTO patients (amka, first_name, last_name, photo)
-        VALUES (%s, %s, %s, %s)
-    """, (amka, first_name, last_name, photo))
+        INSERT INTO patients (amka, first_name, last_name, birth_date, phone, email, photo)
+        VALUES (%s,%s,%s,%s,%s,%s,%s)
+    """, (
+        request.form["amka"],
+        request.form["first_name"],
+        request.form["last_name"],
+        request.form["birth_date"],
+        request.form["phone"],
+        request.form["email"],
+        photo
+    ))
     conn.commit()
     cur.close()
-    conn.close()
     return redirect("/")
 
-@app.route("/patient_photo/<int:patient_id>")
-def patient_photo(patient_id):
-    conn = get_conn()
+@app.route("/patient_photo/<int:id>")
+def patient_photo(id):
     cur = conn.cursor()
-    cur.execute("SELECT photo FROM patients WHERE id = %s;", (patient_id,))
+    cur.execute("SELECT photo FROM patients WHERE id=%s", (id,))
     photo = cur.fetchone()[0]
     cur.close()
-    conn.close()
     return send_file(io.BytesIO(photo), mimetype="image/jpeg")
 
-@app.route("/add_file/<int:patient_id>", methods=["POST"])
-def add_file(patient_id):
+@app.route("/add_file/<int:id>", methods=["POST"])
+def add_file(id):
     file = request.files["file"]
-    file_data = file.read()
-
-    conn = get_conn()
     cur = conn.cursor()
     cur.execute("""
-        INSERT INTO medical_files (patient_id, file_type, file_name, file_data)
-        VALUES (%s, %s, %s, %s)
-    """, (patient_id, file.content_type, file.filename, file_data))
+        INSERT INTO files (patient_id, file_name, file_type, file_data)
+        VALUES (%s,%s,%s,%s)
+    """, (
+        id,
+        file.filename,
+        file.content_type,
+        file.read()
+    ))
     conn.commit()
     cur.close()
-    conn.close()
     return redirect("/")
 
-@app.route("/download_file/<int:file_id>")
-def download_file(file_id):
-    conn = get_conn()
+@app.route("/file/<int:id>")
+def get_file(id):
     cur = conn.cursor()
-    cur.execute("SELECT file_name, file_data FROM medical_files WHERE id = %s;", (file_id,))
-    file_name, file_data = cur.fetchone()
+    cur.execute("SELECT file_name, file_type, file_data FROM files WHERE id=%s", (id,))
+    file = cur.fetchone()
     cur.close()
-    conn.close()
-    return send_file(io.BytesIO(file_data), download_name=file_name, as_attachment=True)
+    return send_file(io.BytesIO(file[2]), download_name=file[0], mimetype=file[1])
+
+@app.route("/add_prescription/<int:id>", methods=["POST"])
+def add_prescription(id):
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO prescriptions (patient_id, prescription_date, doctor_name, therapy_text)
+        VALUES (%s,%s,%s,%s)
+    """, (
+        id,
+        request.form["date"],
+        request.form["doctor"],
+        request.form["therapy"]
+    ))
+    conn.commit()
+    cur.close()
+    return redirect("/")
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()
