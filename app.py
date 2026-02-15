@@ -15,13 +15,11 @@ def index():
     cur = conn.cursor()
     cur.execute("SELECT id, amka, first_name, last_name, birth_date, phone, email FROM patients ORDER BY id DESC")
     patients_raw = cur.fetchall()
-    
     patients = []
     for p in patients_raw:
         cur.execute("SELECT id, file_name FROM medical_files WHERE patient_id = %s", (p[0],))
         files = cur.fetchall()
         patients.append({'info': p, 'files': files})
-    
     cur.close()
     conn.close()
     return render_template("index.html", patients=patients)
@@ -31,7 +29,7 @@ def add_patient():
     conn = get_connection()
     cur = conn.cursor()
     cur.execute("INSERT INTO patients (amka, first_name, last_name, birth_date, phone, email) VALUES (%s, %s, %s, %s, %s, %s)",
-                (request.form["amka"], request.form["first_name"], request.form["last_name"], request.form["birth_date"], request.form["phone"], request.form["email"]))
+                (request.form["amka"], request.form["first_name"], request.form["last_name"], request.form["birth_date"] or None, request.form["phone"], request.form["email"]))
     conn.commit()
     cur.close()
     conn.close()
@@ -79,7 +77,7 @@ def view_file(file_id):
     file = cur.fetchone()
     cur.close()
     conn.close()
-    return send_file(io.BytesIO(file[2]), mimetype=file[1], as_attachment=False, download_name=file[0])
+    return send_file(io.BytesIO(file[2]), mimetype=file[1])
 
 @app.route("/delete_file/<int:file_id>")
 def delete_file(file_id):
@@ -90,3 +88,6 @@ def delete_file(file_id):
     cur.close()
     conn.close()
     return redirect("/")
+
+if __name__ == "__main__":
+    app.run(debug=True)
