@@ -1,86 +1,67 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
-<title>Ιατρικό Πληροφοριακό Σύστημα</title>
-
+<title>Medical System</title>
 <style>
-body{
-    font-family: Arial;
-    background:#111;
-    color:white;
-    padding:20px;
-}
-input,button{
-    padding:10px;
-    margin:5px;
-}
-.card{
-    background:#222;
-    padding:15px;
-    margin-top:15px;
-    border-radius:10px;
-}
-img{
-    max-width:300px;
-    margin-top:10px;
-}
+body { font-family: Arial; background:#f2f2f2; }
+.container { width:1200px; margin:auto; }
+.card { background:white; padding:20px; margin:10px; border-radius:8px; }
+input,button { padding:8px; margin:5px; }
+table { width:100%; border-collapse:collapse; }
+td,th { border:1px solid #ddd; padding:8px; }
 </style>
-
 </head>
 <body>
+<div class="container">
 
-<h1>Διαχείριση Ασθενών</h1>
+<h1>Ιατρικό Σύστημα</h1>
 
 <div class="card">
 <h2>Νέος Ασθενής</h2>
-
-<input id="amka" placeholder="ΑΜΚΑ">
-<input id="first" placeholder="Όνομα">
-<input id="last" placeholder="Επώνυμο">
-<button onclick="savePatient()">Αποθήκευση</button>
-
+<form method="POST" action="/add_patient">
+<input name="amka" placeholder="ΑΜΚΑ" required>
+<input name="first_name" placeholder="Όνομα" required>
+<input name="last_name" placeholder="Επώνυμο" required>
+<input type="date" name="birth_date">
+<input name="phone" placeholder="Τηλέφωνο">
+<input name="email" placeholder="Email">
+<button type="submit">Αποθήκευση</button>
+</form>
 </div>
 
 <div class="card">
-<h2>Αναζήτηση ΑΜΚΑ</h2>
-<input id="search_amka" placeholder="ΑΜΚΑ">
-<button onclick="search()">Αναζήτηση</button>
-
-<div id="result"></div>
+<h2>Αναζήτηση</h2>
+<form method="POST" action="/search">
+<input name="search" placeholder="ΑΜΚΑ ή Επώνυμο">
+<button type="submit">Αναζήτηση</button>
+</form>
 </div>
 
-<script>
+<div class="card">
+<h2>Λίστα Ασθενών</h2>
+<table>
+<tr>
+<th>ΑΜΚΑ</th>
+<th>Όνομα</th>
+<th>Επώνυμο</th>
+<th>Αρχείο</th>
+</tr>
+{% for p in patients %}
+<tr>
+<td>{{p[1]}}</td>
+<td>{{p[2]}}</td>
+<td>{{p[3]}}</td>
+<td>
+<form method="POST" action="/upload/{{p[0]}}" enctype="multipart/form-data">
+<input type="file" name="file">
+<button type="submit">Ανέβασμα</button>
+</form>
+</td>
+</tr>
+{% endfor %}
+</table>
+</div>
 
-const API="https://andcon.onrender.com"
-
-async function savePatient(){
-
-    const response=await fetch(API+"/patients",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({
-            amka:document.getElementById("amka").value,
-            first_name:document.getElementById("first").value,
-            last_name:document.getElementById("last").value
-        })
-    })
-
-    const data=await response.json()
-    alert("Αποθηκεύτηκε με ID "+data.patient_id)
-}
-
-async function search(){
-
-    const amka=document.getElementById("search_amka").value
-    const response=await fetch(API+"/search?amka="+amka)
-    const data=await response.json()
-
-    document.getElementById("result").innerHTML=
-        "<pre>"+JSON.stringify(data,null,2)+"</pre>"
-}
-
-</script>
-
+</div>
 </body>
 </html>
