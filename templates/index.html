@@ -1,67 +1,62 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Professional Medical System</title>
-<style>
-body{font-family:Arial;background:#f4f6f9;padding:30px}
-.card{background:white;padding:20px;margin-bottom:20px;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,0.1)}
-input,button{padding:8px;margin:5px}
-button{background:#007BFF;color:white;border:none;border-radius:5px}
-button.delete{background:red}
-a{margin-right:10px}
-</style>
+    <title>Professional Medical System</title>
+    <style>
+        body{font-family:Arial;background:#f4f6f9;padding:20px}
+        .card{background:white;padding:15px;margin-bottom:15px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1)}
+        input,button{padding:8px;margin:5px}
+        .btn-del{background:#ff4444;color:white;border:none;border-radius:5px;cursor:pointer}
+        .btn-view{background:#0066cc;color:white;text-decoration:none;padding:5px 10px;border-radius:5px;display:inline-block}
+        .patient-header{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #eee}
+    </style>
 </head>
 <body>
+    <h1>Professional Medical System Online</h1>
+    <div class="card">
+        <h2>Νέος Ασθενής</h2>
+        <form method="POST" action="/add_patient">
+            <input name="amka" placeholder="AMKA" required>
+            <input name="first_name" placeholder="Όνομα" required>
+            <input name="last_name" placeholder="Επώνυμο" required>
+            <input type="date" name="birth_date">
+            <input name="phone" placeholder="Τηλέφωνο">
+            <input name="email" placeholder="Email">
+            <button type="submit" style="background:#28a745;color:white;border:none;border-radius:5px">Αποθήκευση</button>
+        </form>
+    </div>
 
-<h1>Professional Medical System Online</h1>
+    {% for item in patients %}
+    <div class="card">
+        <div class="patient-header">
+            <h3>{{item.info[2]}} {{item.info[3]}} (AMKA: {{item.info[1]}})</h3>
+            <a href="/delete_patient/{{item.info[0]}}" class="btn-del" onclick="return confirm('Διαγραφή ασθενή και όλων των αρχείων του;')">Διαγραφή Ασθενή</a>
+        </div>
+        
+        <form method="POST" action="/edit_patient/{{item.info[0]}}">
+            <input name="amka" value="{{item.info[1]}}">
+            <input name="first_name" value="{{item.info[2]}}">
+            <input name="last_name" value="{{item.info[3]}}">
+            <input name="phone" value="{{item.info[5]}}">
+            <input name="email" value="{{item.info[6]}}">
+            <button type="submit">Ενημέρωση Στοιχείων</button>
+        </form>
 
-<div class="card">
-<h2>Νέος Ασθενής</h2>
-<form method="POST" action="/add_patient">
-<input name="amka" placeholder="AMKA" required>
-<input name="first_name" placeholder="Όνομα" required>
-<input name="last_name" placeholder="Επώνυμο" required>
-<input type="date" name="birth_date">
-<input name="phone" placeholder="Τηλέφωνο">
-<input name="email" placeholder="Email">
-<button type="submit">Αποθήκευση</button>
-</form>
-</div>
+        <hr>
+        <h4>Αρχεία & Ακτινογραφίες</h4>
+        {% for f in item.files %}
+            <div style="margin:5px 0">
+                <span>{{f[1]}}</span>
+                <a href="/view_file/{{f[0]}}" target="_blank" class="btn-view">Άνοιγμα</a>
+                <a href="/delete_file/{{f[0]}}" style="color:red;margin-left:10px">Διαγραφή</a>
+            </div>
+        {% endfor %}
 
-{% for p in patients %}
-<div class="card">
-<h3>{{p[2]}} {{p[3]}} (AMKA: {{p[1]}})</h3>
-
-<form method="POST" action="/update_patient/{{p[0]}}">
-<input name="first_name" value="{{p[2]}}" required>
-<input name="last_name" value="{{p[3]}}" required>
-<input name="phone" value="{{p[5]}}">
-<input name="email" value="{{p[6]}}">
-<button type="submit">Ενημέρωση</button>
-</form>
-
-<a href="/delete_patient/{{p[0]}}">
-<button class="delete">Διαγραφή Ασθενή</button>
-</a>
-
-<h4>Αρχεία</h4>
-
-<form method="POST" action="/upload_file/{{p[0]}}" enctype="multipart/form-data">
-<input type="file" name="file" required>
-<button type="submit">Ανέβασμα Αρχείου</button>
-</form>
-
-{% for f in p[7] %}
-<div>
-<a href="/view_file/{{f[0]}}" target="_blank">{{f[1]}}</a>
-<a href="/delete_file/{{f[0]}}">
-<button class="delete">Διαγραφή</button>
-</a>
-</div>
-{% endfor %}
-
-</div>
-{% endfor %}
-
+        <form method="POST" action="/upload_file/{{item.info[0]}}" enctype="multipart/form-data" style="margin-top:10px">
+            <input type="file" name="file" required>
+            <button type="submit">Μεταφόρτωση Νέου Αρχείου</button>
+        </form>
+    </div>
+    {% endfor %}
 </body>
 </html>
