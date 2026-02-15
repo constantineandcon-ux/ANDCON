@@ -50,3 +50,19 @@ return redirect('/')
 
 if name == 'main':
 app.run()
+@app.route('/upload_xray/<int:patient_id>', methods=['POST'])
+def upload_xray(patient_id):
+    file = request.files['file']
+    if file:
+        filename = file.filename
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(filepath)
+
+        conn = sqlite3.connect('database.db')
+        c = conn.cursor()
+        c.execute("INSERT INTO xrays (patient_id, filename) VALUES (?, ?)", 
+                  (patient_id, filename))
+        conn.commit()
+        conn.close()
+
+    return redirect('/')
