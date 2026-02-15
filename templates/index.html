@@ -2,66 +2,61 @@
 <html lang="el">
 <head>
     <meta charset="UTF-8">
-    <title>Ιατρικό Σύστημα ANTKON</title>
+    <title>ANTKON Medical System</title>
     <style>
-        body { font-family: 'Segoe UI', Arial; background: #e9ecef; padding: 20px; }
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 25px; }
-        .patient-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 15px; }
-        input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-        button { padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; color: white; font-weight: bold; }
-        .btn-add { background: #28a745; }
-        .btn-edit { background: #ffc107; color: black; }
-        .btn-delete { background: #dc3545; }
-        .file-item { background: #f8f9fa; padding: 10px; margin: 5px 0; border-radius: 6px; display: flex; justify-content: space-between; }
+        body { font-family: sans-serif; background: #f4f7f6; padding: 20px; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        input { padding: 8px; margin: 5px; border: 1px solid #ddd; border-radius: 4px; }
+        button { padding: 8px 15px; border-radius: 4px; border: none; cursor: pointer; color: white; font-weight: bold; }
+        .btn-blue { background: #007bff; }
+        .btn-red { background: #dc3545; }
+        .btn-green { background: #28a745; }
+        .file-list { background: #f9f9f9; padding: 10px; margin-top: 10px; border-radius: 4px; }
     </style>
 </head>
 <body>
-    <h1>Διαχείριση Ασθενών & Αρχείων</h1>
+    <h1>Διαχείριση Ιατρικού Αρχείου</h1>
 
     <div class="card">
-        <h3>Εγγραφή Νέου Ασθενή</h3>
-        <form action="/add_patient" method="POST" class="patient-row">
+        <h3>Εισαγωγή Νέου Ασθενή</h3>
+        <form action="/add_patient" method="POST">
             <input type="text" name="amka" placeholder="ΑΜΚΑ" required>
             <input type="text" name="first_name" placeholder="Όνομα" required>
             <input type="text" name="last_name" placeholder="Επώνυμο" required>
             <input type="date" name="birth_date">
             <input type="text" name="phone" placeholder="Τηλέφωνο">
             <input type="email" name="email" placeholder="Email">
-            <button type="submit" class="btn-add">Αποθήκευση</button>
+            <button type="submit" class="btn-blue">Προσθήκη</button>
         </form>
     </div>
 
     {% for p in patients %}
     <div class="card">
-        <form action="/edit_patient/{{p.info[0]}}" method="POST" class="patient-row">
+        <form action="/edit_patient/{{p.info[0]}}" method="POST" style="display:inline;">
             <input type="text" name="amka" value="{{p.info[1]}}">
             <input type="text" name="first_name" value="{{p.info[2]}}">
             <input type="text" name="last_name" value="{{p.info[3]}}">
             <input type="text" name="phone" value="{{p.info[5]}}">
             <input type="text" name="email" value="{{p.info[6]}}">
-            <button type="submit" class="btn-edit">Ενημέρωση</button>
-            <a href="/delete_patient/{{p.info[0]}}" onclick="return confirm('ΠΡΟΣΟΧΗ: Θα διαγραφεί ο ασθενής και όλες οι ακτινογραφίες του!')">
-                <button type="button" class="btn-delete">Διαγραφή Ασθενή</button>
-            </a>
+            <button type="submit" class="btn-green">Ενημέρωση</button>
         </form>
+        <a href="/delete_patient/{{p.info[0]}}" onclick="return confirm('Διαγραφή ασθενή και αρχείων;')">
+            <button class="btn-red">Διαγραφή Ασθενή</button>
+        </a>
 
-        <div style="margin-top:20px;">
-            <h4>Ακτινογραφίες & Έγγραφα:</h4>
-            {% for f in p.files %}
-            <div class="file-item">
-                <span>📄 {{ f[1] }}</span>
-                <div>
-                    <a href="/view_file/{{ f[0] }}" target="_blank" style="text-decoration:none; color:#007bff; margin-right:15px;">Άνοιγμα</a>
-                    <a href="/delete_file/{{ f[0] }}" style="color:red;" onclick="return confirm('Διαγραφή αρχείου;')">Διαγραφή</a>
-                </div>
-            </div>
-            {% endfor %}
-
-            <form action="/upload_file/{{p.info[0]}}" method="POST" enctype="multipart/form-data" style="margin-top:15px;">
-                <input type="file" name="file" required>
-                <button type="submit" style="background:#6c757d;">Ανέβασμα Αρχείου</button>
-            </form>
+        <h4>Αρχεία / Ακτινογραφίες</h4>
+        {% for f in p.files %}
+        <div class="file-list">
+            <strong>{{ f[1] }}</strong>
+            <a href="/view_file/{{ f[0] }}" target="_blank" style="margin-left:20px;">Άνοιγμα</a>
+            <a href="/delete_file/{{ f[0] }}" style="color:red; margin-left:15px;" onclick="return confirm('Διαγραφή αρχείου;')">Διαγραφή</a>
         </div>
+        {% endfor %}
+
+        <form action="/upload_file/{{p.info[0]}}" method="POST" enctype="multipart/form-data" style="margin-top:15px;">
+            <input type="file" name="file" required>
+            <button type="submit" style="background:#6c757d;">Ανέβασμα Αρχείου</button>
+        </form>
     </div>
     {% endfor %}
 </body>
