@@ -6,14 +6,17 @@
 <body>
 
 <h2>Νέος Ασθενής</h2>
-
 <form action="/add_patient" method="post">
-Όνομα: <input type="text" name="name" required><br>
-Ηλικία: <input type="number" name="age"><br>
-ΑΜΚΑ: <input type="text" name="amka"><br>
-Τηλέφωνο: <input type="text" name="phone"><br>
-Διεύθυνση: <input type="text" name="address"><br>
-<button type="submit">Αποθήκευση</button>
+    ΑΜΚΑ: <input type="text" name="amka" required>
+    Όνομα: <input type="text" name="name" required>
+    Ηλικία: <input type="number" name="age">
+    Φύλο:
+    <select name="gender">
+        <option>Άνδρας</option>
+        <option>Γυναίκα</option>
+        <option>Άλλο</option>
+    </select>
+    <button type="submit">Αποθήκευση</button>
 </form>
 
 <hr>
@@ -22,25 +25,23 @@
 
 {% for patient in patients %}
 <div style="border:1px solid black; padding:10px; margin:10px;">
-<strong>{{ patient[1] }}</strong> ({{ patient[2] }} ετών)<br>
-ΑΜΚΑ: {{ patient[3] }}<br>
-Τηλέφωνο: {{ patient[4] }}<br>
-Διεύθυνση: {{ patient[5] }}<br><br>
+    <strong>{{ patient[2] }}</strong> (ΑΜΚΑ: {{ patient[1] }}) - {{ patient[3] }} ετών
 
-<h4>Ακτινογραφία</h4>
-<form action="/upload_xray/{{ patient[0] }}" method="post" enctype="multipart/form-data">
-<input type="file" name="file">
-<button type="submit">Αποθήκευση Ακτινογραφίας</button>
-</form>
+    <h4>Ακτινογραφία</h4>
+    <form action="/upload_xray/{{ patient[0] }}" method="post" enctype="multipart/form-data">
+        Τύπος Εξέτασης:
+        <input type="text" name="exam_type" placeholder="Π.χ Θώρακος">
+        <input type="file" name="file">
+        <button type="submit">Αποθήκευση Ακτινογραφίας</button>
+    </form>
 
-<h4>Συνταγή</h4>
-<form action="/add_prescription/{{ patient[0] }}" method="post">
-Φάρμακο: <input type="text" name="medication">
-Δοσολογία: <input type="text" name="dosage">
-Οδηγίες: <input type="text" name="instructions">
-<button type="submit">Καταχώρηση</button>
-</form>
-
+    <h4>Συνταγή</h4>
+    <form action="/add_prescription/{{ patient[0] }}" method="post">
+        Φάρμακο: <input type="text" name="medication">
+        Δοσολογία: <input type="text" name="dosage">
+        Οδηγίες: <input type="text" name="instructions">
+        <button type="submit">Αποθήκευση Συνταγής</button>
+    </form>
 </div>
 {% endfor %}
 
