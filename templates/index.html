@@ -1,0 +1,11 @@
+<!DOCTYPE html> <html> <head> <title>Ιατρικό Σύστημα</title> </head> <body> <h2>Ανέβασμα Ακτινογραφίας</h2> <form action="/upload" method="post" enctype="multipart/form-data"> <input type="file" name="file"> <button type="submit">Αποθήκευση</button> </form> <h3>Αποθηκευμένες Ακτινογραφίες:</h3>
+
+{% for file in os.listdir('static/uploads') %}
+<div>
+<a href="{{ url_for('static', filename='uploads/' + file) }}" target="_blank">
+{{ file }}
+</a>
+</div>
+{% endfor %}
+
+</body> </html>
