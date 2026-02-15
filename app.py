@@ -1,73 +1,114 @@
-from flask import Flask, request, jsonify, render_template
-import sqlite3
-import os
+from flask import Flask, request, render_template_string, redirect
+from supabase import create_client
+import uuid
+
+# ================= ΡΥΘΜΙΣΕΙΣ =================
+
+SUPABASE_URL = "ΒΑΛΕ_ΕΔΩ_ΤΟ_URL_ΣΟΥ"
+SUPABASE_KEY = "ΒΑΛΕ_ΕΔΩ_ΤΟ_ΚΛΕΙΔΙ_ΣΟΥ"
+
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 app = Flask(__name__)
 
-DATABASE = "database.db"
+# ================= HTML ΠΕΡΙΒΑΛΛΟΝ =================
 
-def get_db():
-    conn = sqlite3.connect(DATABASE)
-    conn.row_factory = sqlite3.Row
-    return conn
+HTML = """
+<!DOCTYPE html>
+<html>
+<head>
+<title>Ιατρικό Σύστημα</title>
+<style>
+body { font-family: Arial; margin:40px; background:#111; color:white;}
+input, textarea { width:100%; padding:10px; margin:5px 0;}
+button { padding:10px 20px; background:#00ff88; border:none; cursor:pointer;}
+table { width:100%; margin-top:20px; border-collapse: collapse;}
+td, th { border:1px solid #444; padding:8px;}
+a { color:#00ff88;}
+</style>
+</head>
+<body>
 
-def init_db():
-    conn = get_db()
-    cursor = conn.cursor()
+<h2>Νέος Ασθενής</h2>
 
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS patients (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            amka TEXT,
-            name TEXT,
-            age INTEGER,
-            gender TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )
-    """)
+<form method="post" enctype="multipart/form-data">
+<input name="amkA" placeholder="ΑΜΚΑ" required>
+<input name="first_name" placeholder="Όνομα" required>
+<input name="last_name" placeholder="Επώνυμο" required>
+<textarea name="diagnosis" placeholder="Διάγνωση"></textarea>
+<input type="file" name="xray">
+<button type="submit">Αποθήκευση</button>
+</form>
 
-    conn.commit()
-    conn.close()
+<h2>Αναζήτηση</h2>
+<form method="get">
+<input name="search" placeholder="ΑΜΚΑ">
+<button type="submit">Αναζήτηση</button>
+</form>
 
-init_db()
+<table>
+<tr>
+<th>ΑΜΚΑ</th>
+<th>Όνομα</th>
+<th>Διάγνωση</th>
+<th>Ακτινογραφία</th>
+</tr>
+{% for p in patients %}
+<tr>
+<td>{{p['amka']}}</td>
+<td>{{p['first_name']}} {{p['last_name']}}</td>
+<td>{{p['diagnosis']}}</td>
+<td>
+{% if p['xray_url'] %}
+<a href="{{p['xray_url']}}" target="_blank">Άνοιγμα</a>
+{% endif %}
+</td>
+</tr>
+{% endfor %}
+</table>
 
-@app.route("/")
+</body>
+</html>
+"""
+
+# ================= ΛΕΙΤΟΥΡΓΙΑ =================
+
+@app.route("/", methods=["GET", "POST"])
 def index():
-    return render_template("index.html")
 
-@app.route("/add_patient", methods=["POST"])
-def add_patient():
-    data = request.form
+    if request.method == "POST":
+        amka = request.form["amkA"]
+        first_name = request.form["first_name"]
+        last_name = request.form["last_name"]
+        diagnosis = request.form["diagnosis"]
 
-    conn = get_db()
-    cursor = conn.cursor()
+        xray_file = request.files["xray"]
+        xray_url = None
 
-    cursor.execute("""
-        INSERT INTO patients (amka, name, age, gender)
-        VALUES (?, ?, ?, ?)
-    """, (
-        data.get("amka"),
-        data.get("name"),
-        data.get("age"),
-        data.get("gender")
-    ))
+        if xray_file.filename != "":
+            filename = str(uuid.uuid4()) + "_" + xray_file.filename
+            supabase.storage.from_("xrays").upload(filename, xray_file.read())
+            xray_url = supabase.storage.from_("xrays").get_public_url(filename)
 
-    conn.commit()
-    conn.close()
+        supabase.table("patients").insert({
+            "amka": amka,
+            "first_name": first_name,
+            "last_name": last_name,
+            "diagnosis": diagnosis,
+            "xray_url": xray_url
+        }).execute()
 
-    return "OK"
+        return redirect("/")
 
-@app.route("/patients")
-def patients():
-    conn = get_db()
-    cursor = conn.cursor()
+    search = request.args.get("search")
 
-    cursor.execute("SELECT * FROM patients ORDER BY id DESC")
-    rows = cursor.fetchall()
+    if search:
+        patients = supabase.table("patients").select("*").eq("amka", search).execute().data
+    else:
+        patients = supabase.table("patients").select("*").execute().data
 
-    conn.close()
+    return render_template_string(HTML, patients=patients)
 
-    return jsonify([dict(row) for row in rows])
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()
