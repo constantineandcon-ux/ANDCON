@@ -1,178 +1,48 @@
 <!DOCTYPE html>
 <html lang="el">
 <head>
-    <meta charset="UTF-8">
-    <title>Ιατρικό Σύστημα Ασθενών</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f2f4f8;
-            margin: 0;
-            padding: 0;
-        }
-
-        header {
-            background: #1e2a38;
-            color: white;
-            padding: 20px;
-            text-align: center;
-            font-size: 24px;
-            font-weight: bold;
-        }
-
-        .container {
-            width: 95%;
-            margin: 30px auto;
-        }
-
-        .card {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-
-        h2 {
-            margin-top: 0;
-        }
-
-        input, button {
-            padding: 10px;
-            margin: 5px 0;
-            width: 100%;
-            box-sizing: border-box;
-        }
-
-        button {
-            background: #0077cc;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-
-        button:hover {
-            background: #005fa3;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-        }
-
-        th, td {
-            padding: 10px;
-            border: 1px solid #ddd;
-            text-align: left;
-        }
-
-        th {
-            background: #1e2a38;
-            color: white;
-        }
-
-        img {
-            max-height: 120px;
-            border-radius: 6px;
-        }
-
-        .file-upload {
-            margin-top: 10px;
-        }
-
-        .search-box {
-            margin-bottom: 15px;
-        }
-    </style>
+<meta charset="UTF-8">
+<title>Ιατρικό Σύστημα</title>
+<style>
+body {font-family: Arial; background:#f5f7fa;}
+.card {background:white; padding:20px; margin:20px; border-radius:10px;}
+input, textarea, button {width:100%; padding:8px; margin:5px 0;}
+img {max-height:150px;}
+</style>
 </head>
 <body>
 
-<header>
-    Σύστημα Διαχείρισης Ιατρικών Δεδομένων
-</header>
-
-<div class="container">
-
-    <!-- ΝΕΟΣ ΑΣΘΕΝΗΣ -->
-    <div class="card">
-        <h2>Καταχώρηση Νέου Ασθενή</h2>
-        <form action="/add_patient" method="POST" enctype="multipart/form-data">
-            <input type="text" name="amka" placeholder="ΑΜΚΑ" required>
-            <input type="text" name="first_name" placeholder="Όνομα" required>
-            <input type="text" name="last_name" placeholder="Επώνυμο" required>
-            <input type="file" name="photo" accept="image/*" required>
-            <button type="submit">Αποθήκευση Ασθενή</button>
-        </form>
-    </div>
-
-    <!-- ΑΝΑΖΗΤΗΣΗ -->
-    <div class="card">
-        <h2>Αναζήτηση Ασθενή</h2>
-        <input type="text" id="searchInput" placeholder="Αναζήτηση με ΑΜΚΑ ή Όνομα..." onkeyup="searchTable()">
-    </div>
-
-    <!-- ΛΙΣΤΑ ΑΣΘΕΝΩΝ -->
-    <div class="card">
-        <h2>Αποθηκευμένοι Ασθενείς</h2>
-        <table id="patientsTable">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>ΑΜΚΑ</th>
-                    <th>Όνομα</th>
-                    <th>Επώνυμο</th>
-                    <th>Φωτογραφία</th>
-                    <th>Αρχεία</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for p in patients %}
-                <tr>
-                    <td>{{ p[0] }}</td>
-                    <td>{{ p[1] }}</td>
-                    <td>{{ p[2] }}</td>
-                    <td>{{ p[3] }}</td>
-                    <td>
-                        <img src="/patient_photo/{{ p[0] }}">
-                    </td>
-                    <td>
-                        <form class="file-upload" action="/add_file/{{ p[0] }}" method="POST" enctype="multipart/form-data">
-                            <input type="file" name="file" required>
-                            <button type="submit">Αποθήκευση Αρχείου</button>
-                        </form>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-
+<div class="card">
+<h2>Νέος Ασθενής</h2>
+<form action="/add_patient" method="POST" enctype="multipart/form-data">
+<input name="amka" placeholder="ΑΜΚΑ" required>
+<input name="first_name" placeholder="Όνομα" required>
+<input name="last_name" placeholder="Επώνυμο" required>
+<input type="date" name="birth_date">
+<input name="phone" placeholder="Τηλέφωνο">
+<input name="email" placeholder="Email">
+<input type="file" name="photo" accept="image/*" required>
+<button>Αποθήκευση</button>
+</form>
 </div>
 
-<script>
-function searchTable() {
-    let input = document.getElementById("searchInput");
-    let filter = input.value.toLowerCase();
-    let table = document.getElementById("patientsTable");
-    let tr = table.getElementsByTagName("tr");
+{% for p in patients %}
+<div class="card">
+<h3>{{p[2]}} {{p[3]}} — {{p[1]}}</h3>
+<img src="/patient_photo/{{p[0]}}">
+<form action="/add_file/{{p[0]}}" method="POST" enctype="multipart/form-data">
+<input type="file" name="file" required>
+<button>Αποθήκευση Αρχείου</button>
+</form>
 
-    for (let i = 1; i < tr.length; i++) {
-        let td1 = tr[i].getElementsByTagName("td")[1];
-        let td2 = tr[i].getElementsByTagName("td")[2];
-        let td3 = tr[i].getElementsByTagName("td")[3];
-
-        if (td1 || td2 || td3) {
-            let textValue = td1.textContent + td2.textContent + td3.textContent;
-            if (textValue.toLowerCase().indexOf(filter) > -1) {
-                tr[i].style.display = "";
-            } else {
-                tr[i].style.display = "none";
-            }
-        }
-    }
-}
-</script>
+<form action="/add_prescription/{{p[0]}}" method="POST">
+<input type="date" name="date" required>
+<input name="doctor" placeholder="Ιατρός">
+<textarea name="therapy" placeholder="Θεραπεία"></textarea>
+<button>Αποθήκευση Συνταγής</button>
+</form>
+</div>
+{% endfor %}
 
 </body>
 </html>
