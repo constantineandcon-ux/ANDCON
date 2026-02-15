@@ -1,60 +1,57 @@
 <!DOCTYPE html>
-<html>
+<html lang="el">
 <head>
-    <title>Professional Medical System</title>
+    <meta charset="UTF-8">
+    <title>Σύστημα Διαχείρισης Ασθενών</title>
     <style>
-        body{font-family:Arial;background:#f4f6f9;padding:20px}
-        .card{background:white;padding:15px;margin-bottom:15px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1)}
-        input,button{padding:8px;margin:5px}
-        .btn-del{background:#ff4444;color:white;border:none;border-radius:5px;cursor:pointer}
-        .btn-view{background:#0066cc;color:white;text-decoration:none;padding:5px 10px;border-radius:5px;display:inline-block}
-        .patient-header{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #eee}
+        body { font-family: sans-serif; background: #f0f2f5; padding: 20px; }
+        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        input { padding: 8px; margin: 5px; border: 1px solid #ddd; border-radius: 4px; }
+        button { padding: 8px 15px; cursor: pointer; border-radius: 4px; border: none; background: #007bff; color: white; }
+        .delete-btn { background: #dc3545; margin-left: 10px; }
+        .file-box { background: #f8f9fa; padding: 10px; margin-top: 10px; border-radius: 5px; border-left: 4px solid #007bff; }
     </style>
 </head>
 <body>
-    <h1>Professional Medical System Online</h1>
+    <h1>Ιατρικό Αρχείο</h1>
+
     <div class="card">
-        <h2>Νέος Ασθενής</h2>
-        <form method="POST" action="/add_patient">
-            <input name="amka" placeholder="AMKA" required>
-            <input name="first_name" placeholder="Όνομα" required>
-            <input name="last_name" placeholder="Επώνυμο" required>
+        <h3>Προσθήκη Νέου Ασθενή</h3>
+        <form action="/add_patient" method="POST">
+            <input type="text" name="amka" placeholder="ΑΜΚΑ" required>
+            <input type="text" name="first_name" placeholder="Όνομα" required>
+            <input type="text" name="last_name" placeholder="Επώνυμο" required>
             <input type="date" name="birth_date">
-            <input name="phone" placeholder="Τηλέφωνο">
-            <input name="email" placeholder="Email">
-            <button type="submit" style="background:#28a745;color:white;border:none;border-radius:5px">Αποθήκευση</button>
+            <input type="text" name="phone" placeholder="Τηλέφωνο">
+            <input type="email" name="email" placeholder="Email">
+            <button type="submit">Αποθήκευση</button>
         </form>
     </div>
 
-    {% for item in patients %}
+    {% for p in patients %}
     <div class="card">
-        <div class="patient-header">
-            <h3>{{item.info[2]}} {{item.info[3]}} (AMKA: {{item.info[1]}})</h3>
-            <a href="/delete_patient/{{item.info[0]}}" class="btn-del" onclick="return confirm('Διαγραφή ασθενή και όλων των αρχείων του;')">Διαγραφή Ασθενή</a>
-        </div>
-        
-        <form method="POST" action="/edit_patient/{{item.info[0]}}">
-            <input name="amka" value="{{item.info[1]}}">
-            <input name="first_name" value="{{item.info[2]}}">
-            <input name="last_name" value="{{item.info[3]}}">
-            <input name="phone" value="{{item.info[5]}}">
-            <input name="email" value="{{item.info[6]}}">
-            <button type="submit">Ενημέρωση Στοιχείων</button>
+        <form action="/edit_patient/{{p.info[0]}}" method="POST" style="display:inline;">
+            <input type="text" name="amka" value="{{p.info[1]}}">
+            <input type="text" name="first_name" value="{{p.info[2]}}">
+            <input type="text" name="last_name" value="{{p.info[3]}}">
+            <input type="text" name="phone" value="{{p.info[5]}}">
+            <input type="text" name="email" value="{{p.info[6]}}">
+            <button type="submit" style="background: #28a745;">Ενημέρωση</button>
         </form>
+        <a href="/delete_patient/{{p.info[0]}}"><button class="delete-btn" onclick="return confirm('Διαγραφή ασθενή και όλων των αρχείων του;')">Διαγραφή Ασθενή</button></a>
 
-        <hr>
-        <h4>Αρχεία & Ακτινογραφίες</h4>
-        {% for f in item.files %}
-            <div style="margin:5px 0">
-                <span>{{f[1]}}</span>
-                <a href="/view_file/{{f[0]}}" target="_blank" class="btn-view">Άνοιγμα</a>
-                <a href="/delete_file/{{f[0]}}" style="color:red;margin-left:10px">Διαγραφή</a>
-            </div>
+        <h4>Αρχεία / Ακτινογραφίες:</h4>
+        {% for f in p.files %}
+        <div class="file-box">
+            <strong>{{ f[1] }}</strong>
+            <a href="/view_file/{{ f[0] }}" target="_blank">Άνοιγμα</a> | 
+            <a href="/delete_file/{{ f[0] }}" style="color: red;" onclick="return confirm('Διαγραφή αρχείου;')">Διαγραφή</a>
+        </div>
         {% endfor %}
 
-        <form method="POST" action="/upload_file/{{item.info[0]}}" enctype="multipart/form-data" style="margin-top:10px">
+        <form action="/upload_file/{{p.info[0]}}" method="POST" enctype="multipart/form-data" style="margin-top:10px;">
             <input type="file" name="file" required>
-            <button type="submit">Μεταφόρτωση Νέου Αρχείου</button>
+            <button type="submit" style="background: #6c757d;">Ανέβασμα Αρχείου</button>
         </form>
     </div>
     {% endfor %}
