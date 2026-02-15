@@ -5,17 +5,17 @@
 </head>
 <body>
 
-<h2>Νέος Ασθενής</h2>
+<h1>Νέος Ασθενής</h1>
+
 <form action="/add_patient" method="post">
-    ΑΜΚΑ: <input type="text" name="amka" required>
-    Όνομα: <input type="text" name="name" required>
-    Ηλικία: <input type="number" name="age">
+    ΑΜΚΑ: <input type="text" name="amka" required><br>
+    Όνομα: <input type="text" name="name" required><br>
+    Ηλικία: <input type="number" name="age" required><br>
     Φύλο:
     <select name="gender">
-        <option>Άνδρας</option>
-        <option>Γυναίκα</option>
-        <option>Άλλο</option>
-    </select>
+        <option value="Άνδρας">Άνδρας</option>
+        <option value="Γυναίκα">Γυναίκα</option>
+    </select><br>
     <button type="submit">Αποθήκευση</button>
 </form>
 
@@ -25,21 +25,20 @@
 
 {% for patient in patients %}
 <div style="border:1px solid black; padding:10px; margin:10px;">
-    <strong>{{ patient[2] }}</strong> (ΑΜΚΑ: {{ patient[1] }}) - {{ patient[3] }} ετών
+    <strong>{{ patient[2] }}</strong> (ΑΜΚΑ: {{ patient[1] }}) - {{ patient[3] }} ετών - {{ patient[4] }}
 
     <h4>Ακτινογραφία</h4>
     <form action="/upload_xray/{{ patient[0] }}" method="post" enctype="multipart/form-data">
-        Τύπος Εξέτασης:
-        <input type="text" name="exam_type" placeholder="Π.χ Θώρακος">
-        <input type="file" name="file">
+        Τύπος εξέτασης: <input type="text" name="exam_type" required>
+        <input type="file" name="file" required>
         <button type="submit">Αποθήκευση Ακτινογραφίας</button>
     </form>
 
     <h4>Συνταγή</h4>
     <form action="/add_prescription/{{ patient[0] }}" method="post">
-        Φάρμακο: <input type="text" name="medication">
-        Δοσολογία: <input type="text" name="dosage">
-        Οδηγίες: <input type="text" name="instructions">
+        Φάρμακο: <input type="text" name="medication" required><br>
+        Δοσολογία: <input type="text" name="dosage" required><br>
+        Οδηγίες: <input type="text" name="instructions"><br>
         <button type="submit">Αποθήκευση Συνταγής</button>
     </form>
 </div>
