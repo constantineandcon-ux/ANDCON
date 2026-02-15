@@ -1,48 +1,178 @@
 <!DOCTYPE html>
-<html>
+<html lang="el">
 <head>
-    <title>Ιατρικό Πληροφοριακό Σύστημα</title>
+    <meta charset="UTF-8">
+    <title>Ιατρικό Σύστημα Ασθενών</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f2f4f8;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background: #1e2a38;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .container {
+            width: 95%;
+            margin: 30px auto;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            margin-top: 0;
+        }
+
+        input, button {
+            padding: 10px;
+            margin: 5px 0;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        button {
+            background: #0077cc;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #005fa3;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        th {
+            background: #1e2a38;
+            color: white;
+        }
+
+        img {
+            max-height: 120px;
+            border-radius: 6px;
+        }
+
+        .file-upload {
+            margin-top: 10px;
+        }
+
+        .search-box {
+            margin-bottom: 15px;
+        }
+    </style>
 </head>
 <body>
 
-<h1>Νέος Ασθενής</h1>
+<header>
+    Σύστημα Διαχείρισης Ιατρικών Δεδομένων
+</header>
 
-<form action="/add_patient" method="post">
-    ΑΜΚΑ: <input type="text" name="amka" required><br>
-    Όνομα: <input type="text" name="name" required><br>
-    Ηλικία: <input type="number" name="age" required><br>
-    Φύλο:
-    <select name="gender">
-        <option value="Άνδρας">Άνδρας</option>
-        <option value="Γυναίκα">Γυναίκα</option>
-    </select><br>
-    <button type="submit">Αποθήκευση</button>
-</form>
+<div class="container">
 
-<hr>
+    <!-- ΝΕΟΣ ΑΣΘΕΝΗΣ -->
+    <div class="card">
+        <h2>Καταχώρηση Νέου Ασθενή</h2>
+        <form action="/add_patient" method="POST" enctype="multipart/form-data">
+            <input type="text" name="amka" placeholder="ΑΜΚΑ" required>
+            <input type="text" name="first_name" placeholder="Όνομα" required>
+            <input type="text" name="last_name" placeholder="Επώνυμο" required>
+            <input type="file" name="photo" accept="image/*" required>
+            <button type="submit">Αποθήκευση Ασθενή</button>
+        </form>
+    </div>
 
-<h2>Ασθενείς</h2>
+    <!-- ΑΝΑΖΗΤΗΣΗ -->
+    <div class="card">
+        <h2>Αναζήτηση Ασθενή</h2>
+        <input type="text" id="searchInput" placeholder="Αναζήτηση με ΑΜΚΑ ή Όνομα..." onkeyup="searchTable()">
+    </div>
 
-{% for patient in patients %}
-<div style="border:1px solid black; padding:10px; margin:10px;">
-    <strong>{{ patient[2] }}</strong> (ΑΜΚΑ: {{ patient[1] }}) - {{ patient[3] }} ετών - {{ patient[4] }}
+    <!-- ΛΙΣΤΑ ΑΣΘΕΝΩΝ -->
+    <div class="card">
+        <h2>Αποθηκευμένοι Ασθενείς</h2>
+        <table id="patientsTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>ΑΜΚΑ</th>
+                    <th>Όνομα</th>
+                    <th>Επώνυμο</th>
+                    <th>Φωτογραφία</th>
+                    <th>Αρχεία</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in patients %}
+                <tr>
+                    <td>{{ p[0] }}</td>
+                    <td>{{ p[1] }}</td>
+                    <td>{{ p[2] }}</td>
+                    <td>{{ p[3] }}</td>
+                    <td>
+                        <img src="/patient_photo/{{ p[0] }}">
+                    </td>
+                    <td>
+                        <form class="file-upload" action="/add_file/{{ p[0] }}" method="POST" enctype="multipart/form-data">
+                            <input type="file" name="file" required>
+                            <button type="submit">Αποθήκευση Αρχείου</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 
-    <h4>Ακτινογραφία</h4>
-    <form action="/upload_xray/{{ patient[0] }}" method="post" enctype="multipart/form-data">
-        Τύπος εξέτασης: <input type="text" name="exam_type" required>
-        <input type="file" name="file" required>
-        <button type="submit">Αποθήκευση Ακτινογραφίας</button>
-    </form>
-
-    <h4>Συνταγή</h4>
-    <form action="/add_prescription/{{ patient[0] }}" method="post">
-        Φάρμακο: <input type="text" name="medication" required><br>
-        Δοσολογία: <input type="text" name="dosage" required><br>
-        Οδηγίες: <input type="text" name="instructions"><br>
-        <button type="submit">Αποθήκευση Συνταγής</button>
-    </form>
 </div>
-{% endfor %}
+
+<script>
+function searchTable() {
+    let input = document.getElementById("searchInput");
+    let filter = input.value.toLowerCase();
+    let table = document.getElementById("patientsTable");
+    let tr = table.getElementsByTagName("tr");
+
+    for (let i = 1; i < tr.length; i++) {
+        let td1 = tr[i].getElementsByTagName("td")[1];
+        let td2 = tr[i].getElementsByTagName("td")[2];
+        let td3 = tr[i].getElementsByTagName("td")[3];
+
+        if (td1 || td2 || td3) {
+            let textValue = td1.textContent + td2.textContent + td3.textContent;
+            if (textValue.toLowerCase().indexOf(filter) > -1) {
+                tr[i].style.display = "";
+            } else {
+                tr[i].style.display = "none";
+            }
+        }
+    }
+}
+</script>
 
 </body>
 </html>
