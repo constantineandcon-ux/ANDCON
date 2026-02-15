@@ -77,7 +77,7 @@ def view_file(file_id):
     file = cur.fetchone()
     cur.close()
     conn.close()
-    return send_file(io.BytesIO(file[2]), mimetype=file[1], as_attachment=False, download_name=file[0])
+    return send_file(io.BytesIO(file[2]), mimetype=file[1])
 
 @app.route("/delete_file/<int:file_id>")
 def delete_file(file_id):
