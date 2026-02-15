@@ -1,92 +1,107 @@
-from flask import Flask, render_template, request, redirect, send_file
+import os
+import base64
+from flask import Flask, request, jsonify, send_file
+from flask_cors import CORS
 import psycopg2
-import io
+from io import BytesIO
 
 app = Flask(__name__)
+CORS(app)
 
-conn = psycopg2.connect(
-    host="localhost",
-    database="medical",
-    user="postgres",
-    password="1234"
-)
+DATABASE_URL = os.environ.get("DATABASE_URL")
+
+def get_connection():
+    return psycopg2.connect(DATABASE_URL)
 
 @app.route("/")
-def index():
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM patients ORDER BY created_at DESC")
-    patients = cur.fetchall()
-    cur.close()
-    return render_template("index.html", patients=patients)
+def home():
+    return "PROFESSIONAL MEDICAL SYSTEM ONLINE"
 
-@app.route("/add_patient", methods=["POST"])
-def add_patient():
-    photo = request.files["photo"].read()
+@app.route("/patients", methods=["POST"])
+def create_patient():
+    data = request.json
+    conn = get_connection()
     cur = conn.cursor()
+
     cur.execute("""
-        INSERT INTO patients (amka, first_name, last_name, birth_date, phone, email, photo)
-        VALUES (%s,%s,%s,%s,%s,%s,%s)
+        INSERT INTO patients (amka, first_name, last_name, birth_date, phone, email)
+        VALUES (%s,%s,%s,%s,%s,%s)
+        RETURNING id
     """, (
-        request.form["amka"],
-        request.form["first_name"],
-        request.form["last_name"],
-        request.form["birth_date"],
-        request.form["phone"],
-        request.form["email"],
-        photo
+        data["amka"],
+        data["first_name"],
+        data["last_name"],
+        data.get("birth_date"),
+        data.get("phone"),
+        data.get("email")
     ))
+
+    patient_id = cur.fetchone()[0]
     conn.commit()
     cur.close()
-    return redirect("/")
+    conn.close()
 
-@app.route("/patient_photo/<int:id>")
-def patient_photo(id):
-    cur = conn.cursor()
-    cur.execute("SELECT photo FROM patients WHERE id=%s", (id,))
-    photo = cur.fetchone()[0]
-    cur.close()
-    return send_file(io.BytesIO(photo), mimetype="image/jpeg")
+    return jsonify({"patient_id": patient_id})
 
-@app.route("/add_file/<int:id>", methods=["POST"])
-def add_file(id):
+@app.route("/upload/<int:patient_id>", methods=["POST"])
+def upload_file(patient_id):
     file = request.files["file"]
+    file_data = file.read()
+
+    conn = get_connection()
     cur = conn.cursor()
+
     cur.execute("""
-        INSERT INTO files (patient_id, file_name, file_type, file_data)
+        INSERT INTO medical_files (patient_id, file_name, file_type, file_data)
         VALUES (%s,%s,%s,%s)
     """, (
-        id,
+        patient_id,
         file.filename,
         file.content_type,
-        file.read()
+        psycopg2.Binary(file_data)
     ))
+
     conn.commit()
     cur.close()
-    return redirect("/")
+    conn.close()
 
-@app.route("/file/<int:id>")
-def get_file(id):
+    return jsonify({"status": "file saved"})
+
+@app.route("/files/<int:file_id>")
+def get_file(file_id):
+    conn = get_connection()
     cur = conn.cursor()
-    cur.execute("SELECT file_name, file_type, file_data FROM files WHERE id=%s", (id,))
+
+    cur.execute("SELECT file_name, file_type, file_data FROM medical_files WHERE id=%s", (file_id,))
     file = cur.fetchone()
-    cur.close()
-    return send_file(io.BytesIO(file[2]), download_name=file[0], mimetype=file[1])
 
-@app.route("/add_prescription/<int:id>", methods=["POST"])
-def add_prescription(id):
-    cur = conn.cursor()
-    cur.execute("""
-        INSERT INTO prescriptions (patient_id, prescription_date, doctor_name, therapy_text)
-        VALUES (%s,%s,%s,%s)
-    """, (
-        id,
-        request.form["date"],
-        request.form["doctor"],
-        request.form["therapy"]
-    ))
-    conn.commit()
     cur.close()
-    return redirect("/")
+    conn.close()
+
+    return send_file(
+        BytesIO(file[2]),
+        download_name=file[0],
+        mimetype=file[1]
+    )
+
+@app.route("/search")
+def search():
+    amka = request.args.get("amka")
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT * FROM patients
+        WHERE amka=%s
+    """, (amka,))
+
+    result = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    return jsonify(result)
 
 if __name__ == "__main__":
     app.run()
