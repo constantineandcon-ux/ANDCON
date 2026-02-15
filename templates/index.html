@@ -3,11 +3,12 @@
 <head>
 <title>Professional Medical System</title>
 <style>
-body{font-family:Arial;background:#f4f6f9;padding:20px}
-h1{color:#222}
-.card{background:white;padding:15px;margin-bottom:15px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1)}
+body{font-family:Arial;background:#f4f6f9;padding:30px}
+.card{background:white;padding:20px;margin-bottom:20px;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,0.1)}
 input,button{padding:8px;margin:5px}
-button{background:#0066cc;color:white;border:none;border-radius:5px}
+button{background:#007BFF;color:white;border:none;border-radius:5px}
+button.delete{background:red}
+a{margin-right:10px}
 </style>
 </head>
 <body>
@@ -17,7 +18,7 @@ button{background:#0066cc;color:white;border:none;border-radius:5px}
 <div class="card">
 <h2>Νέος Ασθενής</h2>
 <form method="POST" action="/add_patient">
-<input name="amka" placeholder="ΑΜΚΑ" required>
+<input name="amka" placeholder="AMKA" required>
 <input name="first_name" placeholder="Όνομα" required>
 <input name="last_name" placeholder="Επώνυμο" required>
 <input type="date" name="birth_date">
@@ -29,12 +30,35 @@ button{background:#0066cc;color:white;border:none;border-radius:5px}
 
 {% for p in patients %}
 <div class="card">
-<h3>{{p[2]}} {{p[3]}} (ΑΜΚΑ: {{p[1]}})</h3>
+<h3>{{p[2]}} {{p[3]}} (AMKA: {{p[1]}})</h3>
+
+<form method="POST" action="/update_patient/{{p[0]}}">
+<input name="first_name" value="{{p[2]}}" required>
+<input name="last_name" value="{{p[3]}}" required>
+<input name="phone" value="{{p[5]}}">
+<input name="email" value="{{p[6]}}">
+<button type="submit">Ενημέρωση</button>
+</form>
+
+<a href="/delete_patient/{{p[0]}}">
+<button class="delete">Διαγραφή Ασθενή</button>
+</a>
+
+<h4>Αρχεία</h4>
 
 <form method="POST" action="/upload_file/{{p[0]}}" enctype="multipart/form-data">
 <input type="file" name="file" required>
 <button type="submit">Ανέβασμα Αρχείου</button>
 </form>
+
+{% for f in p[7] %}
+<div>
+<a href="/view_file/{{f[0]}}" target="_blank">{{f[1]}}</a>
+<a href="/delete_file/{{f[0]}}">
+<button class="delete">Διαγραφή</button>
+</a>
+</div>
+{% endfor %}
 
 </div>
 {% endfor %}
